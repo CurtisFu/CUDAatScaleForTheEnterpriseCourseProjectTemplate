@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
         // TODO: use oRotationCenter as nShiftX and nShiftY?
         NPP_CHECK_NPP(nppiRotate_8u_C1R(
             oDeviceSrc.data(), oSrcSize, oDeviceSrc.pitch(), oSrcBounding,
-            oDeviceDst.data(), oDeviceDst.pitch(), oBoundingBox, angle, 0, 0,
+            oDeviceDst.data(), oDeviceDst.pitch(), oBoundingBox, angle, -oBoundingBoxArray[0][0], -oBoundingBoxArray[0][1],
             NPPI_INTER_NN));
 
         // declare a host image for the result
