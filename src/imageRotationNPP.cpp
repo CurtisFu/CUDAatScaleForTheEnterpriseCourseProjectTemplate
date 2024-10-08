@@ -38,6 +38,7 @@
 #include <ImagesNPP.h>
 
 #include <string.h>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 
@@ -158,11 +159,13 @@ int main(int argc, char *argv[])
         NppiSize oSrcSize = {(int)oDeviceSrc.width(), (int)oDeviceSrc.height()};
         NppiPoint oSrcOffset = {0, 0};
         NppiSize oSizeROI = {(int)oDeviceSrc.width(), (int)oDeviceSrc.height()};
+        NppiRect oSrcBounding = {0, 0, oSrcSize.width, oSrcSize.height};
 
         // Calculate the bounding box of the rotated image
-        NppiRect oBoundingBox;
-        double angle = 45.0; // Rotation angle in degrees
-        NPP_CHECK_NPP(nppiGetRotateBound(oSrcSize, angle, &oBoundingBox));
+        const double angle = 45.0; // Rotation angle in degrees
+        double oBoundingBoxArray[2][2] = {0};
+        NPP_CHECK_NPP(nppiGetRotateBound(oSrcBounding, oBoundingBoxArray, angle, 0, 0));
+        NppiRect oBoundingBox = {0, 0, std::ceil(std::fabs(oBoundingBoxArray[1][0] - oBoundingBoxArray[0][0])), std::ceil(std::fabs(oBoundingBoxArray[1][1] - oBoundingBoxArray[0][1]))};
 
         // allocate device image for the rotated image
         npp::ImageNPP_8u_C1 oDeviceDst(oBoundingBox.width, oBoundingBox.height);
@@ -171,9 +174,10 @@ int main(int argc, char *argv[])
         NppiPoint oRotationCenter = {(int)(oSrcSize.width / 2), (int)(oSrcSize.height / 2)};
 
         // run the rotation
+        // TODO: use oRotationCenter as nShiftX and nShiftY?
         NPP_CHECK_NPP(nppiRotate_8u_C1R(
-            oDeviceSrc.data(), oSrcSize, oDeviceSrc.pitch(), oSrcOffset,
-            oDeviceDst.data(), oDeviceDst.pitch(), oBoundingBox, angle, oRotationCenter,
+            oDeviceSrc.data(), oSrcSize, oDeviceSrc.pitch(), oSrcBounding,
+            oDeviceDst.data(), oDeviceDst.pitch(), oBoundingBox, angle, 0, 0,
             NPPI_INTER_NN));
 
         // declare a host image for the result
